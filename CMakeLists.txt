@@ -15,13 +15,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -Wno-deprecated-declara
 message("CMAKE_CXX_COMPILER_ID: " ${CMAKE_CXX_COMPILER_ID})
 message("CMAKE_CXX_COMPILER_VERSION: " ${CMAKE_CXX_COMPILER_VERSION})
 
-
 # project specific flags
 if(DEBUG)
     add_definitions(-DDEBUG)
 endif()
-
-# add_definitions(-DTKDNN_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
 #-------------------------------------------------------------------------------
 # CUDA
