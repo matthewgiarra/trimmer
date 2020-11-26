@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
     std::cout << "HELLO DINGUS" << std::endl;
     std::cout<<"TRIMMER: Object-detection-based video trimmer\n";
 
+    g_run_video_writer_thread = true;
+
     // Path to the config file
     std::string config_filepath = std::string(argv[1]);
 
@@ -39,6 +41,7 @@ int main(int argc, char *argv[])
 
     // Start the video writer thread 
     std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath);
+    
 
     // Declare some detectors instances 
     tk::dnn::Yolo3Detection yolo;
@@ -182,7 +185,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            std::cout<<"Opened video file: " << video_path << std::endl;
+            std::cout<<"Opened " << video_path << " in detector" << std::endl;
             image_width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
             image_height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         }
@@ -257,7 +260,7 @@ int main(int argc, char *argv[])
                             int frame_num = batch_num * batch_size + bi;
                             video_queue_detector.front().detection_framenums.push(frame_num);
                             trimmer_classes_detected = true;
-                            std::cout << video_path << ": detected " << detNN->classesNames[bbox.cl] << " in frame " << frame_num << std::endl;
+                            // std::cout << video_path << ": detected " << detNN->classesNames[bbox.cl] << " in frame " << frame_num << std::endl;
                             break;
                         }
                     }
@@ -279,12 +282,12 @@ int main(int argc, char *argv[])
         video_queue_buf_sp->push(video_queue_detector.front());
         data_lock.unlock();
         video_queue_detector.pop();
+        
         std::cout << "Finished detections in " << video_path << std::endl;
-
     }
 
     g_run_video_writer_thread = false;
-    video_writer_thread.join();  
+    video_writer_thread.join();
     std::cout<<"Done with batch\n";   
     double mean = 0; 
     

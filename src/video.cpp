@@ -69,7 +69,6 @@ int write_result_video(Video &video, const std::string &config_filepath)
         std::cerr << "Failed to open video file: " << video.path << std::endl;
         return(-1); //TODO: More descriptive return for error tracking
     }
-    std::cout<< "Opened video file: " << video.path << std::endl;
     
     // Get some parameters from the input video
     int image_width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
@@ -115,7 +114,7 @@ int write_result_video(Video &video, const std::string &config_filepath)
 
 extern std::atomic<bool> g_run_video_writer_thread;
 void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath)
-{
+{    
     // Make a queue for writing videos
     std::queue<Video> video_queue_writer;
     while(g_run_video_writer_thread)
@@ -123,6 +122,7 @@ void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex
         std::unique_lock<std::timed_mutex> data_lock(*video_queue_mutex_sp, std::defer_lock);
         if(data_lock.try_lock_for(std::chrono::milliseconds(10)))
         {
+            
             // Load up the writer queue with all the 
             // videos from the buffer queue
             // (detections are done on these vids)
@@ -135,7 +135,7 @@ void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex
 
         // Export all the videos in the queue
         while(!video_queue_writer.empty())
-        {
+        {            
             write_result_video(video_queue_writer.front(), config_filepath);
             video_queue_writer.pop();
         }        
