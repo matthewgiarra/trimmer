@@ -17,7 +17,7 @@ const std::string g_data_dir_host{"data_dir_host"};
 const std::string g_data_dir_container{"data_dir_container"};
 const std::string g_workspace_dir_container{"workspace_dir_container"};
 const std::string g_video_list_path_workspace{"video_list_path_workspace"};
-const std::string g_model_path_workspace{"model_path_workspace"};
+const std::string g_model_path_container{"model_path_container"};
 
 // Options
 const std::string g_options{"options"};

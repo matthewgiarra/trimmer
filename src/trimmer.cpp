@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     int num_videos = video_obj_list.size();
 
     // Initialize the network
-    std::string net = config_data[g_files][g_model_path_workspace];
+    std::string net = config_data[g_files][g_model_path_container];
     float conf_thresh = config_data[g_parameters][g_confidence_threshold];
     int batch_size = config_data[g_parameters][g_batch_size];
     if(batch_size < 1 || batch_size > 64)
