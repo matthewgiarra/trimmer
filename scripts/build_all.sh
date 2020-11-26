@@ -3,6 +3,9 @@
 # Figure out where the scripts directory is (based on where this file is running)
 SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+# Build the docker container
+/bin/bash "$SCRIPTS_DIR/build_docker.sh"
+
 # Build source codes for this project
 /bin/bash "$SCRIPTS_DIR/build_source.sh" 
 
