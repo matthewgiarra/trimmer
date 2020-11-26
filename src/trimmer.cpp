@@ -13,9 +13,9 @@
 #include "nlohmann/json.hpp"
 #include "constants.hpp"
 #include "video.hpp"
-#include "trimmerio.hpp"
 #include "boost/filesystem.hpp"
 
+std::atomic<bool> g_run_video_writer_thread(false);
 
 int main(int argc, char *argv[])
 {
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
         std::cout << "Finished detections in " << video_path << std::endl;
 
         std::cout << "Writing result video for input " << video_path << "..." << std::endl;
-        write_results(video_obj_list[vnum], config_filepath);
+        write_result_video(video_obj_list[vnum], config_filepath);
 
     }
       
