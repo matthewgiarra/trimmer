@@ -57,10 +57,6 @@ add_subdirectory(${JSON_ROOT_DIR})
 include_directories(${JSON_INCLUDE_DIR})
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-
-# gives problems in cross-compiling, probably malformed cmake config
-#find_package(yaml-cpp REQUIRED)
-
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
@@ -72,10 +68,6 @@ include_directories(${CORE_INCLUDE_DIR} ${tkDNN_ROOT_DIR}/include ${CUDA_INCLUDE
 add_library(tkDNN SHARED ${tkdnn_SRC})
 target_link_libraries(tkDNN ${tkdnn_LIBS})
 
-#static 
-#add_library(tkDNN_static STATIC ${tkdnn_SRC})
-#target_link_libraries(tkDNN_static ${tkdnn_LIBS})
-
 set(CORE_SOURCE
 "${CORE_SOURCE_DIR}/video.cpp")
 set(CORE_HEADERS "")
@@ -86,18 +78,3 @@ set(TRIMMER_HEADERS "")
 set(TRIMMER_APP "trimmer")
 add_executable(${TRIMMER_APP} ${TRIMMER_SOURCE})
 target_link_libraries(${TRIMMER_APP} nlohmann_json::nlohmann_json ${Boost_LIBRARIES} tkDNN)
-
-#-------------------------------------------------------------------------------
-# Install
-#-------------------------------------------------------------------------------
-#if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#    set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" 
-#         CACHE PATH "default install path" FORCE)
-#endif()
-# message("install dir:" ${CMAKE_INSTALL_PREFIX})
-# install(DIRECTORY include/ DESTINATION include/)
-# install(TARGETS tkDNN kernels DESTINATION lib)
-# install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/" # source directory
-#         DESTINATION "share/tkDNN/cmake/" # target directory
-# )
-
