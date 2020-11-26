@@ -6,6 +6,8 @@
 #include <fstream>
 #include <string>
 #include <queue>
+#include <memory>
+#include <thread>
 
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
@@ -22,19 +24,21 @@ int main(int argc, char *argv[])
 
     std::cout << "HELLO DINGUS" << std::endl;
     std::cout<<"TRIMMER: Object-detection-based video trimmer\n";
-    
+
+    // Path to the config file
+    std::string config_filepath = std::string(argv[1]);
+
     // Some hard coded stuff for now
     char ntype = 'y';
     int n_classes = 80;
 
-    // Print out the input arguments
-    for(int i = 0; i < argc; i++)
-    {
-        std::cout << "argv[" << i << "] = " << argv[i] << std::endl;
-    }
+    // Shared pointer to video buffer for swapping b/t threads
+    std::shared_ptr<std::queue<Video>> video_queue_buf_sp  = std::shared_ptr<std::queue<Video>>(new std::queue<Video>());
+    std::shared_ptr<std::timed_mutex> video_queue_mutex_sp = std::shared_ptr<std::timed_mutex>(new std::timed_mutex());
+    std::queue<Video> video_queue_detector;
 
-    // Path to the config file
-    std::string config_filepath = std::string(argv[1]);
+    // Start the video writer thread 
+    std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath);
 
     // Declare some detectors instances 
     tk::dnn::Yolo3Detection yolo;
@@ -101,8 +105,7 @@ int main(int argc, char *argv[])
 
     // Turn the video list into a vector of boost filepaths
     std::vector<std::string> video_path_list_str = file_list_data[g_files];
-    std::vector<boost::filesystem::path> video_path_list;
-    std::vector<Video> video_obj_list;
+    
     for(int i = 0; i < video_path_list_str.size(); i++)
     {
         // Absolute path to the file on the host
@@ -127,11 +130,10 @@ int main(int argc, char *argv[])
         {
             // Add the video path (container path) to the vector of video paths  
             std::cout << "Adding video to list: " << video_path_host_abs.string() << std::endl;
-            video_path_list.push_back(video_path_container);
-            video_obj_list.push_back(Video(video_path_container));
+            video_queue_detector.push(Video(video_path_container));
         }
     }
-    int num_videos = video_obj_list.size();
+    int num_videos = video_queue_detector.size();
 
     // Initialize the network
     std::string net = config_data[g_files][g_model_path_container];
@@ -163,14 +165,14 @@ int main(int argc, char *argv[])
     }
 
     // Loop over the videos
-    for(int vnum = 0; vnum < num_videos; vnum++)
+    while(!video_queue_detector.empty())
     {
         
         // Image height and width
         int image_height, image_width;
         
         // Video path as a string
-        std::string video_path = video_obj_list[vnum].path;
+        std::string video_path = video_queue_detector.front().path;
         bool gRun = true;
         cv::VideoCapture cap(video_path);
         if(!cap.isOpened())
@@ -253,7 +255,7 @@ int main(int argc, char *argv[])
                         if(trimmer_class_nums[j] == bbox.cl)
                         {
                             int frame_num = batch_num * batch_size + bi;
-                            video_obj_list[vnum].detection_framenums.push(frame_num);
+                            video_queue_detector.front().detection_framenums.push(frame_num);
                             trimmer_classes_detected = true;
                             std::cout << video_path << ": detected " << detNN->classesNames[bbox.cl] << " in frame " << frame_num << std::endl;
                             break;
@@ -271,15 +273,18 @@ int main(int argc, char *argv[])
             batch_num++;     
         }
 
-        // Set "finished" field to true for this video
-        video_obj_list[vnum].finished = true;
+        // Push the finished frame to the shared video queue
+        std::unique_lock<std::timed_mutex> data_lock(*video_queue_mutex_sp, std::defer_lock);
+        data_lock.lock();
+        video_queue_buf_sp->push(video_queue_detector.front());
+        data_lock.unlock();
+        video_queue_detector.pop();
         std::cout << "Finished detections in " << video_path << std::endl;
 
-        std::cout << "Writing result video for input " << video_path << "..." << std::endl;
-        write_result_video(video_obj_list[vnum], config_filepath);
-
     }
-      
+
+    g_run_video_writer_thread = false;
+    video_writer_thread.join();  
     std::cout<<"Done with batch\n";   
     double mean = 0; 
     

@@ -7,8 +7,10 @@
 #include "constants.hpp"
 #include <atomic>
 #include <queue>
-#include <vector>
 #include <iostream>
+#include <mutex>
+#include <memory>
+#include <thread>
 
 Video::Video(std::string &input_file_path)
 {
@@ -25,7 +27,7 @@ Video::Video(boost::filesystem::path &input_file_path)
 };
 
 
-int write_result_video(Video &video, std::string config_filepath)
+int write_result_video(Video &video, const std::string &config_filepath)
 {
     // Read the config file
     std::ifstream input_stream;
@@ -112,10 +114,30 @@ int write_result_video(Video &video, std::string config_filepath)
 }
 
 extern std::atomic<bool> g_run_video_writer_thread;
-void run_video_writer_thread(std::shared_ptr<std::vector<Video>> sp_buf)
+void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath)
 {
-    // while(g_run_video_writer_thread)
-    // {
+    // Make a queue for writing videos
+    std::queue<Video> video_queue_writer;
+    while(g_run_video_writer_thread)
+    {
+        std::unique_lock<std::timed_mutex> data_lock(*video_queue_mutex_sp, std::defer_lock);
+        if(data_lock.try_lock_for(std::chrono::milliseconds(10)))
+        {
+            // Load up the writer queue with all the 
+            // videos from the buffer queue
+            // (detections are done on these vids)
+            while(!video_queue_buf_sp->empty())
+            {
+                video_queue_writer.push(video_queue_buf_sp->front());
+                video_queue_buf_sp->pop();
+            }
+        }
 
-    // }
+        // Export all the videos in the queue
+        while(!video_queue_writer.empty())
+        {
+            write_result_video(video_queue_writer.front(), config_filepath);
+            video_queue_writer.pop();
+        }        
+    }
 }
