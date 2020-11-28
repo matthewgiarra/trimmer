@@ -1,7 +1,7 @@
 
 #include "video.hpp"
 #include "constants.hpp"
-// #include "BoundingBox.h"
+#include "BoundingBox.h"
 
 #include "boost/filesystem.hpp"
 #include "opencv2/core/core.hpp"
@@ -18,6 +18,7 @@
 #include <memory>
 #include <thread>
 #include <string>
+#include <algorithm>
 
 Video::Video(const std::string &input_file_path)
 {
@@ -62,7 +63,54 @@ Video::Video(const std::string &input_file_path)
     }
     */
 
-int write_result_video(Video &video, const std::string &config_filepath)
+bool any_detections(const std::vector<tk::dnn::box> &detection_boxes, const std::vector<int> &trimmer_class_nums)
+{
+    // If the vector of bounding boxes is empty,
+    // then there were no detections. Return false.
+    if(detection_boxes.empty())
+    {
+        return(false);
+    }
+
+    // If the vector of bounding boxes is not empty, 
+    // then figure out whether the detected class numbers
+    // appear in the list of class numbers we would like
+    // to include in the trimmed video.
+    std::vector<int> detected_class_numbers(detection_boxes.size());
+    for(int i = 0; i < detection_boxes.size(); i++){
+        detected_class_numbers[i] = detection_boxes[i].cl;
+    }
+
+    // Uniquify the detect_class_numbers vector
+    // to return only the unique class numbers
+    std::sort(detected_class_numbers.begin(), detected_class_numbers.end());
+    std::vector<int>::iterator newEnd;
+    newEnd = std::unique(detected_class_numbers.begin(), detected_class_numbers.end());
+    detected_class_numbers.erase(newEnd, detected_class_numbers.end());
+    
+    // Flag for "any detections?"
+    bool any = false;
+
+    // Loop over the detected class numbers and
+    // and figure out whether any of them are included
+    // in the list of classes on which we want to trim 
+    for(int i = 0; i < detected_class_numbers.size(); i++)
+    {
+        int class_num = detected_class_numbers[i];
+        for(int n = 0; n < trimmer_class_nums.size(); n++)
+        {
+            if(class_num == trimmer_class_nums[n])
+            {
+                any = true;
+                break;
+            }
+        }
+        if(any){break;}
+    }
+    return(any);
+}
+
+int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums)
 {
     // Read the config file
     std::ifstream input_stream;
@@ -97,6 +145,9 @@ int write_result_video(Video &video, const std::string &config_filepath)
     // Construct the output file path (container path)
     boost::filesystem::path output_filepath_container = output_dir_container / output_file_name;
 
+    // Whether to trim videos
+    bool trim_videos = config_data[g_options][g_trim_videos];
+
     // Open the file for reading
     cv::VideoCapture cap(video.path);
     if(!cap.isOpened())
@@ -111,8 +162,8 @@ int write_result_video(Video &video, const std::string &config_filepath)
     int fourcc = cap.get(cv::CAP_PROP_FOURCC);
     double fps = cap.get(cv::CAP_PROP_FPS);
 
-    cv::VideoWriter resultVideo;
-    resultVideo.open(output_filepath_container.string(), fourcc, fps, cv::Size(image_width, image_height));
+    cv::VideoWriter result_video;
+    result_video.open(output_filepath_container.string(), fourcc, fps, cv::Size(image_width, image_height));
 
     // Frame
     cv::Mat frame;
@@ -126,17 +177,18 @@ int write_result_video(Video &video, const std::string &config_filepath)
         {
             break;
         }
-        if(frame_num == video.detection_framenums.front())
+
+        // Write this frame?
+        bool write_frame = (!trim_videos) || any_detections(video.detection_boxes.front(), trimmer_class_nums);
+        if(write_frame)
         {
-            // Add the frame to the video
-            resultVideo << frame;
-
-            // Pop the element from the queue
-            video.detection_framenums.pop();
-
-            // Increment the number of frames written
+            // TODO: add (if(draw_boxes) {//draw_boxes})
+            result_video << frame;
             frames_written++;
         }
+        video.detection_framenums.pop();
+        video.detection_boxes.pop();
+        
         // Increment frame number
         frame_num += 1;
     }
@@ -148,7 +200,7 @@ int write_result_video(Video &video, const std::string &config_filepath)
 }
 
 extern std::atomic<bool> g_run_video_writer_thread;
-void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath)
+void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums)
 {    
     // Make a queue for writing videos
     std::queue<Video> video_queue_writer;
@@ -171,7 +223,7 @@ void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex
         // Export all the videos in the queue
         while(!video_queue_writer.empty())
         {            
-            write_result_video(video_queue_writer.front(), config_filepath);
+            write_result_video(video_queue_writer.front(), config_filepath, trimmer_class_nums);
             video_queue_writer.pop();
         }        
     }

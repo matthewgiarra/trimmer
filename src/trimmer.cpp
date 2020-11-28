@@ -3,7 +3,6 @@
 
 #include "constants.hpp"
 #include "video.hpp"
-#include "bbox.hpp"
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
@@ -41,9 +40,6 @@ int main(int argc, char *argv[])
     std::shared_ptr<std::queue<Video>> video_queue_buf_sp  = std::shared_ptr<std::queue<Video>>(new std::queue<Video>());
     std::shared_ptr<std::timed_mutex> video_queue_mutex_sp = std::shared_ptr<std::timed_mutex>(new std::timed_mutex());
     std::queue<Video> video_queue_detector;
-
-    // Start the video writer thread 
-    std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath);
 
     // Declare some detectors instances 
     tk::dnn::Yolo3Detection yolo;
@@ -165,10 +161,14 @@ int main(int argc, char *argv[])
             }
         }
     }
+    
+    // Print the 
     std::cout << "Trimming on classes:" << std::endl;
     for(int i = 0; i < trimmer_class_names.size(); i++){
         std::cout << trimmer_class_names[i] << " (" << trimmer_class_nums[i] << ")" << std::endl;
     }
+    // Start the video writer thread 
+    std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath, trimmer_class_nums);
 
     // Loop over the videos
     while(!video_queue_detector.empty())
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
                 video_queue_detector.front().detection_framenums.push(frame_num);
 
                 // Detections
-                // video_queue_detector.front().detection_boxes.push(detNN->batchDetected[bi]);
+                video_queue_detector.front().detection_boxes.push(detNN->batchDetected[bi]);
             }
             // Increment the number of processed batches
             batch_num++;     
