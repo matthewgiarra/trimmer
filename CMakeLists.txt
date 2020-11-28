@@ -69,7 +69,8 @@ add_library(tkDNN SHARED ${tkdnn_SRC})
 target_link_libraries(tkDNN ${tkdnn_LIBS})
 
 set(CORE_SOURCE
-"${CORE_SOURCE_DIR}/video.cpp")
+"${CORE_SOURCE_DIR}/video.cpp"
+"${CORE_SOURCE_DIR}/bbox.cpp")
 set(CORE_HEADERS "")
 
 set(TRIMMER_SOURCE "${CORE_SOURCE}" "${CORE_SOURCE_DIR}/trimmer.cpp")

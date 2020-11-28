@@ -1,21 +1,24 @@
+
+// #include "BoundingBox.h"
+
+#include "constants.hpp"
+#include "video.hpp"
+#include "bbox.hpp"
+#include "CenternetDetection.h"
+#include "MobilenetDetection.h"
+#include "Yolo3Detection.h"
+#include "nlohmann/json.hpp"
+#include "boost/filesystem.hpp"
 #include <iostream>
-#include <signal.h>
-#include <stdlib.h>     /* srand, rand */
-#include <unistd.h>
 #include <mutex>
 #include <fstream>
 #include <string>
 #include <queue>
 #include <memory>
 #include <thread>
+#include <atomic>
 
-#include "CenternetDetection.h"
-#include "MobilenetDetection.h"
-#include "Yolo3Detection.h"
-#include "nlohmann/json.hpp"
-#include "constants.hpp"
-#include "video.hpp"
-#include "boost/filesystem.hpp"
+
 
 std::atomic<bool> g_run_video_writer_thread(false);
 
@@ -41,7 +44,6 @@ int main(int argc, char *argv[])
 
     // Start the video writer thread 
     std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath);
-    
 
     // Declare some detectors instances 
     tk::dnn::Yolo3Detection yolo;
@@ -133,7 +135,7 @@ int main(int argc, char *argv[])
         {
             // Add the video path (container path) to the vector of video paths  
             std::cout << "Adding video to list: " << video_path_host_abs.string() << std::endl;
-            video_queue_detector.push(Video(video_path_container));
+            video_queue_detector.push(Video(video_path_container.string()));
         }
     }
     int num_videos = video_queue_detector.size();
@@ -146,12 +148,13 @@ int main(int argc, char *argv[])
         FatalError("Batch dim not supported");
     detNN->init(net, n_classes, batch_size, conf_thresh);
     std::cout << "Classes in model: " << std::endl;
-    for(int i = 0; i < n_classes; i++){
+    for(int i = 0; i < n_classes; i++)
+    {
         std::cout << detNN->classesNames[i] << std::endl;
     }
 
-    std::vector<std::string> trimmer_class_names = config_data[g_classes];
     // Get the class numbers of the class names specified in the config file
+    std::vector<std::string> trimmer_class_names = config_data[g_classes];
     std::vector<int> trimmer_class_nums(trimmer_class_names.size());
     for(int i = 0; i < trimmer_class_names.size(); i++){
         for(int j = 0; j < n_classes; j++){
@@ -170,7 +173,6 @@ int main(int argc, char *argv[])
     // Loop over the videos
     while(!video_queue_detector.empty())
     {
-        
         // Image height and width
         int image_height, image_width;
         
@@ -194,7 +196,7 @@ int main(int argc, char *argv[])
         cv::Mat frame;            
         std::vector<cv::Mat> batch_frame;
         std::vector<cv::Mat> batch_dnn_input;
-        tk::dnn::box bbox;
+        tk::dnn::box tk_bbox;
         std::string class_name;
         
         // Number of batches processed
@@ -244,39 +246,18 @@ int main(int argc, char *argv[])
             // Loop over the frames in the batch
             for(int bi=0; bi<batch_frame.size(); ++bi)
             {
-                // Initialize 'detected' value as false
-                bool trimmer_classes_detected = false;
+                // Frame number
+                int frame_num = batch_num * batch_size + bi;
+                video_queue_detector.front().detection_framenums.push(frame_num);
 
-                // Loop over the detections for the bi'th frame in the batch
-                for(int i=0; i < detNN->batchDetected[bi].size(); i++) { 
-
-                    // Get info for the ith detection in the bi'th batch index
-                    bbox = detNN->batchDetected[bi][i];
-                    // Class number of detection
-                    for(int j = 0; j < trimmer_class_nums.size(); j++)
-                    {
-                        if(trimmer_class_nums[j] == bbox.cl)
-                        {
-                            int frame_num = batch_num * batch_size + bi;
-                            video_queue_detector.front().detection_framenums.push(frame_num);
-                            trimmer_classes_detected = true;
-                            // std::cout << video_path << ": detected " << detNN->classesNames[bbox.cl] << " in frame " << frame_num << std::endl;
-                            break;
-                        }
-                    }
-
-                    if(trimmer_classes_detected)
-                    { 
-                        break;
-                    }
-                }
+                // Detections
+                // video_queue_detector.front().detection_boxes.push(detNN->batchDetected[bi]);
             }
-           
             // Increment the number of processed batches
             batch_num++;     
         }
 
-        // Push the finished frame to the shared video queue
+        // Push the finished video to the shared video queue
         std::unique_lock<std::timed_mutex> data_lock(*video_queue_mutex_sp, std::defer_lock);
         data_lock.lock();
         video_queue_buf_sp->push(video_queue_detector.front());

@@ -1,31 +1,66 @@
+
 #include "video.hpp"
+#include "constants.hpp"
+// #include "BoundingBox.h"
+
 #include "boost/filesystem.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/core/mat.hpp"
 #include "opencv2/videoio.hpp"
 #include "nlohmann/json.hpp"
-#include "constants.hpp"
+
+// #include "bbox.hpp"
+
 #include <atomic>
 #include <queue>
 #include <iostream>
 #include <mutex>
 #include <memory>
 #include <thread>
+#include <string>
 
-Video::Video(std::string &input_file_path)
+Video::Video(const std::string &input_file_path)
 {
     finished = false;
     path = input_file_path;
     
 };
 
-Video::Video(boost::filesystem::path &input_file_path)
-{
-    finished = false;
-    path = input_file_path.string();
+// Video::Video(boost::filesystem::path &input_file_path)
+// {
+//     finished = false;
+//     path = input_file_path.string();
     
-};
+// };
 
+
+/*
+    // Initialize 'detected' value as false
+    bool trimmer_classes_detected = false;
+
+    // 
+
+    // Loop over the detections for the bi'th frame in the batch
+    for(int i=0; i < detNN->batchDetected[bi].size(); i++) { 
+
+        // Get info for the ith detection in the bi'th batch index
+        tk_bbox = detNN->batchDetected[bi][i];
+        
+        // Class number of detection
+        for(int j = 0; j < trimmer_class_nums.size(); j++)
+        {
+            if(trimmer_class_nums[j] == tk_bbox.cl)
+            {
+                // Draw box
+            }
+        }
+
+        if(trimmer_classes_detected)
+        { 
+            break;
+        }
+    }
+    */
 
 int write_result_video(Video &video, const std::string &config_filepath)
 {
