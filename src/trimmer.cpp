@@ -1,11 +1,15 @@
 
 // #include "BoundingBox.h"
 
-#include "constants.hpp"
-#include "video.hpp"
+#include "opencv2/core/mat.hpp"
+#include "opencv2/core/core.hpp"
+
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
+#include "BoundingBox.h"
+
+#include "constants.hpp"
 #include "nlohmann/json.hpp"
 #include "boost/filesystem.hpp"
 #include <iostream>
@@ -16,6 +20,8 @@
 #include <memory>
 #include <thread>
 #include <atomic>
+#include "video.hpp"
+
 
 
 
@@ -143,12 +149,14 @@ int main(int argc, char *argv[])
     if(batch_size < 1 || batch_size > 64)
         FatalError("Batch dim not supported");
     detNN->init(net, n_classes, batch_size, conf_thresh);
+
+    /*
     std::cout << "Classes in model: " << std::endl;
     for(int i = 0; i < n_classes; i++)
     {
         std::cout << detNN->classesNames[i] << std::endl;
     }
-
+    */
     // Get the class numbers of the class names specified in the config file
     std::vector<std::string> trimmer_class_names = config_data[g_classes];
     std::vector<int> trimmer_class_nums(trimmer_class_names.size());
@@ -168,8 +176,8 @@ int main(int argc, char *argv[])
         std::cout << trimmer_class_names[i] << " (" << trimmer_class_nums[i] << ")" << std::endl;
     }
     // Start the video writer thread 
-    std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath, trimmer_class_nums);
-
+    std::thread video_writer_thread(run_video_writer_thread, video_queue_mutex_sp, video_queue_buf_sp, config_filepath, trimmer_class_nums, detNN->classesNames);
+    
     // Loop over the videos
     while(!video_queue_detector.empty())
     {

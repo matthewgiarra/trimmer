@@ -1,15 +1,13 @@
 
 #include "video.hpp"
+#include "draw.hpp"
 #include "constants.hpp"
-#include "BoundingBox.h"
-
-#include "boost/filesystem.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/core/mat.hpp"
 #include "opencv2/videoio.hpp"
+#include "BoundingBox.h"
+#include "boost/filesystem.hpp"
 #include "nlohmann/json.hpp"
-
-// #include "bbox.hpp"
 
 #include <atomic>
 #include <queue>
@@ -110,7 +108,7 @@ bool any_detections(const std::vector<tk::dnn::box> &detection_boxes, const std:
     return(any);
 }
 
-int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums)
+int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
 {
     // Read the config file
     std::ifstream input_stream;
@@ -145,8 +143,13 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     // Construct the output file path (container path)
     boost::filesystem::path output_filepath_container = output_dir_container / output_file_name;
 
-    // Whether to trim videos
+    // Processing options
     bool trim_videos = config_data[g_options][g_trim_videos];
+    bool draw_boxes  = config_data[g_options][g_draw_boxes];
+
+    // Get bounding box colors
+    std::vector<cv::Scalar> box_colors;
+    get_box_colors(box_colors, class_names.size());
 
     // Open the file for reading
     cv::VideoCapture cap(video.path);
@@ -183,6 +186,10 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
         if(write_frame)
         {
             // TODO: add (if(draw_boxes) {//draw_boxes})
+            if(draw_boxes)
+            {
+                draw_boxes_on_frame(frame, video.detection_boxes.front(), box_colors, class_names);
+            }
             result_video << frame;
             frames_written++;
         }
@@ -200,7 +207,7 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
 }
 
 extern std::atomic<bool> g_run_video_writer_thread;
-void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums)
+void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex_sp, std::shared_ptr<std::queue<Video>> video_queue_buf_sp, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
 {    
     // Make a queue for writing videos
     std::queue<Video> video_queue_writer;
@@ -223,7 +230,7 @@ void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex
         // Export all the videos in the queue
         while(!video_queue_writer.empty())
         {            
-            write_result_video(video_queue_writer.front(), config_filepath, trimmer_class_nums);
+            write_result_video(video_queue_writer.front(), config_filepath, trimmer_class_nums, class_names);
             video_queue_writer.pop();
         }        
     }

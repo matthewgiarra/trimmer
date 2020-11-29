@@ -26,6 +26,7 @@ const std::string g_consolidate_videos{"consolidate_videos"};
 const std::string g_output_video_suffix{"output_video_suffix"};
 const std::string g_output_dir_container{"output_dir_container"};
 const std::string g_trim_videos{"trim_videos"};
+const std::string g_draw_boxes{"draw_boxes"};
 
 // Parameters
 const std::string g_parameters{"parameters"};
