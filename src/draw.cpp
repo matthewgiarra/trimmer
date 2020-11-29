@@ -10,13 +10,16 @@
 
 void get_box_colors(std::vector<cv::Scalar> &colors, int num_classes)
 {
+    // Clear the colors vector
+    colors.clear();
+
     // class colors precompute    
     for(int c=0; c<num_classes; c++) {
         int offset = c*123457 % num_classes;
         float r = getColor(2, offset, num_classes);
         float g = getColor(1, offset, num_classes);
         float b = getColor(0, offset, num_classes);
-        colors[c] = cv::Scalar(int(255.0*b), int(255.0*g), int(255.0*r));
+        colors.push_back(cv::Scalar(int(255.0*b), int(255.0*g), int(255.0*r)));
     }
 }
 

@@ -108,6 +108,25 @@ bool any_detections(const std::vector<tk::dnn::box> &detection_boxes, const std:
     return(any);
 }
 
+void get_valid_detections(std::vector<tk::dnn::box> &valid_detections, const std::vector<tk::dnn::box> &all_detections, const std::vector<int> trimmer_class_nums)
+{
+    int num_detections = all_detections.size();
+    int num_trimmer_classes = trimmer_class_nums.size();
+    
+    for(int i = 0; i < num_detections; i++)
+    {
+        int det_class_num = all_detections[i].cl;
+        for(int n = 0; n < num_trimmer_classes; n++)
+        {
+            if(det_class_num == trimmer_class_nums[n])
+            {
+                valid_detections.push_back(all_detections[i]);
+                break;
+            }
+        }
+    }
+}
+
 int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
 {
     // Read the config file
@@ -188,7 +207,9 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
             // TODO: add (if(draw_boxes) {//draw_boxes})
             if(draw_boxes)
             {
-                draw_boxes_on_frame(frame, video.detection_boxes.front(), box_colors, class_names);
+                std::vector<tk::dnn::box> valid_detections;
+                get_valid_detections(valid_detections, video.detection_boxes.front(), trimmer_class_nums);
+                draw_boxes_on_frame(frame, valid_detections, box_colors, class_names);
             }
             result_video << frame;
             frames_written++;
