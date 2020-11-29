@@ -50,7 +50,7 @@ void draw_box_on_frame(cv::Mat &frame, tk::dnn::box &detection_box, const cv::Sc
     // Draw the class name text
     cv::Size text_size = getTextSize(det_class_name, cv::FONT_HERSHEY_SIMPLEX, font_scale, thickness, &baseline);
     cv::rectangle(frame, cv::Point(x0, y0), cv::Point((x0 + text_size.width - 2), (y0 - text_size.height - 2)), color, -1);                      
-    cv::putText(frame, det_class_name, cv::Point(x0, (y0 - (baseline / 2))), cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(255, 255, 255), thickness);
+    cv::putText(frame, det_class_name, cv::Point(x0, (y0 - (baseline / 2))), cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(0, 0, 0), thickness);
 }
 
 void draw_boxes_on_frame(cv::Mat &frame, std::vector<tk::dnn::box> &detection_boxes, const std::vector<cv::Scalar> &colors, const std::vector<std::string> &class_names)

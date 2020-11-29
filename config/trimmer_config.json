@@ -25,7 +25,7 @@
         "write_videos" : true,
         "consolidate_videos" : true,
         "draw_boxes" : true,
-        "trim_videos" : false
+        "trim_videos" : true
     },
 
     "parameters":
