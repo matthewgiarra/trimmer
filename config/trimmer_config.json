@@ -22,13 +22,22 @@
     {
         "consolidate_videos" : true,
         "trim_videos" : true,
-        "draw_boxes" : true
+        "draw_boxes" : true,
+        "draw_roi" : true
     },
 
     "parameters":
     {
         "batch_size" : 16,
         "confidence_threshold" : 0.3,
-        "frame_step" : 1  
+        "frame_step" : 1,
+        "roi" :
+        {
+            "x" : 0.2,
+            "y" : 0.2,
+            "w" : 0.6,
+            "h" : 0.6
+        },
+        "roi_threshold" : 0.5
     }
 }

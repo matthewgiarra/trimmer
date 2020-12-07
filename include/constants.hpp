@@ -33,6 +33,7 @@ const std::string g_parameters{"parameters"};
 const std::string g_confidence_threshold{"confidence_threshold"};
 const std::string g_frame_step{"frame_step"};
 const std::string g_batch_size{"batch_size"};
+const std::string g_roi_threshold{"roi_threshold"};
 const std::string g_roi{"roi"};
 const std::string g_roi_x{"x"};
 const std::string g_roi_y{"y"};

@@ -73,7 +73,9 @@ set(CORE_SOURCE
 "${CORE_SOURCE_DIR}/draw.cpp")
 set(CORE_HEADERS "")
 
-set(TRIMMER_SOURCE "${CORE_SOURCE}" "${CORE_SOURCE_DIR}/trimmer.cpp")
+set(TRIMMER_SOURCE "${CORE_SOURCE}"
+"${CORE_SOURCE_DIR}/filter_detections.cpp"
+"${CORE_SOURCE_DIR}/trimmer.cpp")
 set(TRIMMER_HEADERS "")
 
 set(TRIMMER_APP "trimmer")

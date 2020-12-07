@@ -1,5 +1,6 @@
 
 #include "video.hpp"
+#include "filter_detections.hpp"
 #include "draw.hpp"
 #include "constants.hpp"
 #include "opencv2/core/core.hpp"
@@ -8,7 +9,6 @@
 #include "BoundingBox.h"
 #include "boost/filesystem.hpp"
 #include "nlohmann/json.hpp"
-
 #include <atomic>
 #include <queue>
 #include <iostream>
@@ -25,110 +25,9 @@ Video::Video(const std::string &input_file_path)
     
 };
 
-// Video::Video(boost::filesystem::path &input_file_path)
-// {
-//     finished = false;
-//     path = input_file_path.string();
-    
-// };
-
-
-/*
-    // Initialize 'detected' value as false
-    bool trimmer_classes_detected = false;
-
-    // 
-
-    // Loop over the detections for the bi'th frame in the batch
-    for(int i=0; i < detNN->batchDetected[bi].size(); i++) { 
-
-        // Get info for the ith detection in the bi'th batch index
-        tk_bbox = detNN->batchDetected[bi][i];
-        
-        // Class number of detection
-        for(int j = 0; j < trimmer_class_nums.size(); j++)
-        {
-            if(trimmer_class_nums[j] == tk_bbox.cl)
-            {
-                // Draw box
-            }
-        }
-
-        if(trimmer_classes_detected)
-        { 
-            break;
-        }
-    }
-    */
-
-bool any_detections(const std::vector<tk::dnn::box> &detection_boxes, const std::vector<int> &trimmer_class_nums)
-{
-    // If the vector of bounding boxes is empty,
-    // then there were no detections. Return false.
-    if(detection_boxes.empty())
-    {
-        return(false);
-    }
-
-    // If the vector of bounding boxes is not empty, 
-    // then figure out whether the detected class numbers
-    // appear in the list of class numbers we would like
-    // to include in the trimmed video.
-    std::vector<int> detected_class_numbers(detection_boxes.size());
-    for(int i = 0; i < detection_boxes.size(); i++){
-        detected_class_numbers[i] = detection_boxes[i].cl;
-    }
-
-    // Uniquify the detect_class_numbers vector
-    // to return only the unique class numbers
-    std::sort(detected_class_numbers.begin(), detected_class_numbers.end());
-    std::vector<int>::iterator newEnd;
-    newEnd = std::unique(detected_class_numbers.begin(), detected_class_numbers.end());
-    detected_class_numbers.erase(newEnd, detected_class_numbers.end());
-    
-    // Flag for "any detections?"
-    bool any = false;
-
-    // Loop over the detected class numbers and
-    // and figure out whether any of them are included
-    // in the list of classes on which we want to trim 
-    for(int i = 0; i < detected_class_numbers.size(); i++)
-    {
-        int class_num = detected_class_numbers[i];
-        for(int n = 0; n < trimmer_class_nums.size(); n++)
-        {
-            if(class_num == trimmer_class_nums[n])
-            {
-                any = true;
-                break;
-            }
-        }
-        if(any){break;}
-    }
-    return(any);
-}
-
-void get_valid_detections(std::vector<tk::dnn::box> &valid_detections, const std::vector<tk::dnn::box> &all_detections, const std::vector<int> trimmer_class_nums)
-{
-    int num_detections = all_detections.size();
-    int num_trimmer_classes = trimmer_class_nums.size();
-    
-    for(int i = 0; i < num_detections; i++)
-    {
-        int det_class_num = all_detections[i].cl;
-        for(int n = 0; n < num_trimmer_classes; n++)
-        {
-            if(det_class_num == trimmer_class_nums[n])
-            {
-                valid_detections.push_back(all_detections[i]);
-                break;
-            }
-        }
-    }
-}
-
 int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
 {
+    
     // Read the config file
     std::ifstream input_stream;
     input_stream.open(config_filepath);
@@ -165,7 +64,9 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     // Processing options
     bool trim_videos = config_data[g_options][g_trim_videos];
     bool draw_boxes  = config_data[g_options][g_draw_boxes];
+    bool draw_roi    = config_data[g_options][g_draw_roi];
     int frame_step   = config_data[g_parameters][g_frame_step];
+    float roi_threshold = config_data[g_parameters][g_roi_threshold];
 
     // Get bounding box colors
     std::vector<cv::Scalar> box_colors;
@@ -184,6 +85,18 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     int image_height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     int fourcc = cap.get(cv::CAP_PROP_FOURCC);
     double fps = cap.get(cv::CAP_PROP_FPS);
+
+    // Set up ROI bounding box
+    tk::dnn::box roi;
+    float roi_x = config_data[g_parameters][g_roi][g_roi_x];
+    float roi_y = config_data[g_parameters][g_roi][g_roi_y];
+    float roi_w = config_data[g_parameters][g_roi][g_roi_w];
+    float roi_h = config_data[g_parameters][g_roi][g_roi_h];
+    roi.x = roi_x * image_width;
+    roi.y = roi_y * image_height;
+    roi.w = roi_w * image_width;
+    roi.h = roi_h * image_height;
+    roi.cl = 0;
 
     cv::VideoWriter result_video;
     result_video.open(output_filepath_container.string(), fourcc, fps, cv::Size(image_width, image_height));
@@ -204,17 +117,27 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
             break;
         }
 
+        // Boxes for this frame
+        std::vector<tk::dnn::box> frame_detections_all = video.detection_boxes.front();
+        std::vector<tk::dnn::box> frame_detections_filtered;
+        get_valid_detections(frame_detections_filtered, frame_detections_all, trimmer_class_nums, roi, roi_threshold);
+
         // Write this frame?
-        bool write_frame = (!trim_videos) || any_detections(video.detection_boxes.front(), trimmer_class_nums);
+        bool write_frame = (!trim_videos) || (!frame_detections_filtered.empty());
         if(write_frame)
         {
-            // TODO: add (if(draw_boxes) {//draw_boxes})
             if(draw_boxes)
             {
-                std::vector<tk::dnn::box> valid_detections;
-                get_valid_detections(valid_detections, video.detection_boxes.front(), trimmer_class_nums);
-                draw_boxes_on_frame(frame, valid_detections, box_colors, class_names);
+                draw_boxes_on_frame(frame, frame_detections_filtered, box_colors, class_names);
             }
+            
+            if(draw_roi)
+            {
+                std::vector<std::string> roi_name;
+                roi_name.push_back("ROI");
+                draw_box_on_frame(frame, roi, roi_name);
+            }
+            
             result_video << frame;
             frames_written++;
         }
