@@ -4,3 +4,7 @@ models
 *.bin
 *.rt
 *.weights
+*.mp4
+*.avi
+*.m4v
+*.mov
