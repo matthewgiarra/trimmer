@@ -1,7 +1,7 @@
 {
     "files":
     {
-        "data_dir_host" : "/home/giarrmn1/data",
+        "data_dir_host" : "videos",
         "data_dir_container" : "/data",
         "output_dir_container" : "/data/trimmed_videos",
         "workspace_dir_container" : "/workspace",
@@ -20,7 +20,7 @@
 
     "options" :
     {
-        "consolidate_videos" : true,
+        "consolidate_videos" : false,
         "trim_videos" : true,
         "draw_boxes" : true,
         "draw_roi" : true,
@@ -31,7 +31,7 @@
     {
         "batch_size" : 16,
         "confidence_threshold" : 0.3,
-        "frame_step" : 3,
+        "frame_step" : 1,
         "roi" :
         {
             "x" : 0.2,
