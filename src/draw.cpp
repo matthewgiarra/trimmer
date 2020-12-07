@@ -61,3 +61,30 @@ void draw_boxes_on_frame(cv::Mat &frame, std::vector<tk::dnn::box> &detection_bo
         draw_box_on_frame(frame, detection_boxes[i], color, class_names);
     }
 }
+
+void draw_timestamp(cv::Mat &frame, long time_ms)
+{
+    int thickness = 2;
+    long ms_per_hour = 3.6E6;
+    long ms_per_min = 6E4;
+    long ms_per_sec = 1E3;
+
+    long hr = time_ms / ms_per_hour;
+    time_ms -= hr * ms_per_hour;
+
+    long min = time_ms / ms_per_min;
+    time_ms -= min * ms_per_min;
+    
+    long sec = time_ms / 1000;
+    time_ms -= sec * 1000;
+
+    int pix_height = frame.rows / 20;
+    double font_scale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, pix_height, thickness);
+    int origin_y = frame.rows / 20; 
+
+    std::string time_stamp = std::to_string(hr) + ":" + std::to_string(min) + ":" + std::to_string(sec) + "." + std::to_string(time_ms);
+
+    cv::Size text_size = getTextSize(time_stamp, cv::FONT_HERSHEY_SIMPLEX, font_scale, thickness, 0);
+    cv::rectangle(frame, cv::Point(0, origin_y), cv::Point((text_size.width - 2), (origin_y - text_size.height - 2)), cv::Scalar(255, 255, 255), -1);                      
+    cv::putText(frame, time_stamp, cv::Point(0, origin_y), cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(0, 0, 0),thickness);
+}

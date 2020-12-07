@@ -67,6 +67,7 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     bool draw_roi    = config_data[g_options][g_draw_roi];
     int frame_step   = config_data[g_parameters][g_frame_step];
     float roi_threshold = config_data[g_parameters][g_roi_threshold];
+    bool bool_draw_timestamp = config_data[g_options][g_draw_timestamp];
 
     // Get bounding box colors
     std::vector<cv::Scalar> box_colors;
@@ -116,6 +117,7 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
         {
             break;
         }
+        float time_ms = (float)frame_num * (float)frame_step * 1000.0 / fps;
 
         // Boxes for this frame
         std::vector<tk::dnn::box> frame_detections_all = video.detection_boxes.front();
@@ -136,6 +138,11 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
                 std::vector<std::string> roi_name;
                 roi_name.push_back("ROI");
                 draw_box_on_frame(frame, roi, roi_name);
+            }
+            
+            if(bool_draw_timestamp)
+            {
+                draw_timestamp(frame, (long)time_ms);
             }
             
             result_video << frame;

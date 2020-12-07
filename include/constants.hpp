@@ -27,6 +27,7 @@ const std::string g_output_dir_container{"output_dir_container"};
 const std::string g_trim_videos{"trim_videos"};
 const std::string g_draw_boxes{"draw_boxes"};
 const std::string g_draw_roi{"draw_roi"};
+const std::string g_draw_timestamp{"draw_timestamp"};
 
 // Parameters
 const std::string g_parameters{"parameters"};
