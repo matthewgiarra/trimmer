@@ -20,19 +20,15 @@
 
     "options" :
     {
-        "frame_step" : 1,
-        "write_frames" : false,
-        "write_videos" : true,
         "consolidate_videos" : true,
-        "draw_boxes" : true,
-        "trim_videos" : true
+        "trim_videos" : true,
+        "draw_boxes" : true
     },
 
     "parameters":
     {
         "batch_size" : 16,
         "confidence_threshold" : 0.3,
-        "frame_step" : 1
+        "frame_step" : 1  
     }
-
 }

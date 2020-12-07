@@ -165,6 +165,7 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     // Processing options
     bool trim_videos = config_data[g_options][g_trim_videos];
     bool draw_boxes  = config_data[g_options][g_draw_boxes];
+    int frame_step   = config_data[g_parameters][g_frame_step];
 
     // Get bounding box colors
     std::vector<cv::Scalar> box_colors;
@@ -194,7 +195,10 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     int frames_written = 0;
     while(!video.detection_framenums.empty())
     {
-        cap >> frame;
+        for(int f = 0; f < frame_step; f++)
+        {
+            cap.read(frame);
+        }
         if(!frame.data)
         {
             break;

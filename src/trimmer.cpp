@@ -146,17 +146,18 @@ int main(int argc, char *argv[])
     std::string net = config_data[g_files][g_model_path_container];
     float conf_thresh = config_data[g_parameters][g_confidence_threshold];
     int batch_size = config_data[g_parameters][g_batch_size];
+    int frame_step = config_data[g_parameters][g_frame_step];
     if(batch_size < 1 || batch_size > 64)
         FatalError("Batch dim not supported");
     detNN->init(net, n_classes, batch_size, conf_thresh);
 
-    /*
+    // Print the names of all the classes in the model
     std::cout << "Classes in model: " << std::endl;
     for(int i = 0; i < n_classes; i++)
     {
         std::cout << detNN->classesNames[i] << std::endl;
     }
-    */
+    
     // Get the class numbers of the class names specified in the config file
     std::vector<std::string> trimmer_class_names = config_data[g_classes];
     std::vector<int> trimmer_class_nums(trimmer_class_names.size());
@@ -170,7 +171,7 @@ int main(int argc, char *argv[])
         }
     }
     
-    // Print the 
+    // Print the classes we're trimming on
     std::cout << "Trimming on classes:" << std::endl;
     for(int i = 0; i < trimmer_class_names.size(); i++){
         std::cout << trimmer_class_names[i] << " (" << trimmer_class_nums[i] << ")" << std::endl;
@@ -215,12 +216,16 @@ int main(int argc, char *argv[])
             batch_frame.clear();
             for(int bi=0; bi< batch_size; ++bi)
             {
-                cap >> frame; 
+                // Read the frame
+                for(int f = 0; f < frame_step; f++)
+                {
+                    cap.read(frame);
+                }
                 if(!frame.data)
                 {
                     gRun = false;
                     break;
-                } 
+                }
                     
                 // Frame for drawing I think
                 batch_frame.push_back(frame);
@@ -255,7 +260,7 @@ int main(int argc, char *argv[])
             for(int bi=0; bi<batch_frame.size(); ++bi)
             {
                 // Frame number
-                int frame_num = batch_num * batch_size + bi;
+                int frame_num = batch_num * batch_size + bi * frame_step;
                 video_queue_detector.front().detection_framenums.push(frame_num);
 
                 // Detections

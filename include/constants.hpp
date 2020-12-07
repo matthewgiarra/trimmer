@@ -21,17 +21,22 @@ const std::string g_model_path_container{"model_path_container"};
 
 // Options
 const std::string g_options{"options"};
-const std::string g_write_videos{"write_videos"};
 const std::string g_consolidate_videos{"consolidate_videos"};
 const std::string g_output_video_suffix{"output_video_suffix"};
 const std::string g_output_dir_container{"output_dir_container"};
 const std::string g_trim_videos{"trim_videos"};
 const std::string g_draw_boxes{"draw_boxes"};
+const std::string g_draw_roi{"draw_roi"};
 
 // Parameters
 const std::string g_parameters{"parameters"};
 const std::string g_confidence_threshold{"confidence_threshold"};
 const std::string g_frame_step{"frame_step"};
 const std::string g_batch_size{"batch_size"};
+const std::string g_roi{"roi"};
+const std::string g_roi_x{"x"};
+const std::string g_roi_y{"y"};
+const std::string g_roi_w{"w"};
+const std::string g_roi_h{"h"};
 
 #endif
