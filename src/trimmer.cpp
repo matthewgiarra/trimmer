@@ -12,6 +12,7 @@
 #include "constants.hpp"
 #include "nlohmann/json.hpp"
 #include "boost/filesystem.hpp"
+#include <cmath>
 #include <iostream>
 #include <mutex>
 #include <fstream>
@@ -21,8 +22,6 @@
 #include <thread>
 #include <atomic>
 #include "video.hpp"
-
-
 
 
 std::atomic<bool> g_run_video_writer_thread(false);
@@ -38,6 +37,30 @@ int main(int argc, char *argv[])
     // Path to the config file
     std::string config_filepath = std::string(argv[1]);
 
+    int thread_num;
+    int threads;
+
+    // Thread number
+    if(argc == 1 || argc == 3)
+    {
+        std::cerr << "Usage:" << std::endl << "./trimmer <path_to_config.json>"  << std::endl;
+        std::cerr << "./trimmer <path_to_config.json> <thread_number> <number_of_threads>" << std::endl;
+        return -ENOENT;
+    }
+
+    if(argc == 2)
+    {
+        thread_num = 0;
+        threads = 1;
+    }
+
+    if(argc == 4)
+    {
+        thread_num = atoi(argv[2]);
+        threads    = atoi(argv[3]);
+    }
+
+
     // Some hard coded stuff for now
     char ntype = 'y';
     int n_classes = 80;
@@ -51,7 +74,7 @@ int main(int argc, char *argv[])
     tk::dnn::Yolo3Detection yolo;
     tk::dnn::CenternetDetection cnet;
     tk::dnn::MobilenetDetection mbnet;  
-    tk::dnn::DetectionNN *detNN;  
+    tk::dnn::DetectionNN *detNN;
 
     switch(ntype)
     {
@@ -141,6 +164,45 @@ int main(int argc, char *argv[])
         }
     }
     int num_videos = video_queue_detector.size();
+    threads = std::min(threads, num_videos);
+    if(thread_num > (threads - 1))
+    {
+        std::cerr << "No more videos to process! Exiting." << std::endl;
+        return -ENOENT;
+    }
+
+    // Chunk the video queue into a vector of queues
+    std::vector<std::queue<Video>> video_queue_list(threads);
+ 
+    // Number of videos per chunk (last chunk might have fewer videos)
+    const int chunk_size = (int) std::ceil((float)num_videos / (float)threads);
+
+    // Populate all the chunks
+    for(int c = 0; c < threads; c++)
+    {
+        for(int s = 0; s < chunk_size; s++)
+        {
+            if(!video_queue_detector.empty())
+            {
+                video_queue_list[c].push(video_queue_detector.front());
+                video_queue_detector.pop();
+            }
+        }
+    }
+
+    // Now grab just the video queue for this thread
+    if(!video_queue_detector.empty())
+    {
+        std::cerr << "Error: not all videos assigned to a thread" << std::endl;
+        return -ENOENT;
+    }
+    while(!video_queue_list[thread_num].empty())
+    {
+        video_queue_detector.push(video_queue_list[thread_num].front());
+        video_queue_list[thread_num].pop();
+    }
+
+    std::cout << "Preparing to process " << video_queue_detector.size() << " videos" << std::endl;
 
     // Initialize the network
     std::string net = config_data[g_files][g_model_path_container];
