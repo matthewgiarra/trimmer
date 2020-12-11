@@ -78,7 +78,7 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     if(!cap.isOpened())
     {
         std::cerr << "Failed to open video file for reading in write_result_video(): " << video.path << std::endl;
-        return -ENOENT; //TODO: More descriptive return for error tracking
+        return -ENOENT;
     }
     
     // Get some parameters from the input video
@@ -189,8 +189,6 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     {
         std::cout << "No detections in " << video.path << std::endl;
     }
-
-    //TODO: Check that video actually got written
 
     return(0);
 }
