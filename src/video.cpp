@@ -77,8 +77,8 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     cv::VideoCapture cap(video.path);
     if(!cap.isOpened())
     {
-        std::cerr << "Failed to open video file: " << video.path << std::endl;
-        return(-1); //TODO: More descriptive return for error tracking
+        std::cerr << "Failed to open video file for reading in write_result_video(): " << video.path << std::endl;
+        return -ENOENT; //TODO: More descriptive return for error tracking
     }
     
     // Get some parameters from the input video
@@ -99,14 +99,12 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
     roi.h = roi_h * image_height;
     roi.cl = 0;
 
-    cv::VideoWriter result_video;
-    result_video.open(output_filepath_container.string(), fourcc, fps, cv::Size(image_width, image_height));
-
     // Frame
     cv::Mat frame;
 
     int frame_num = 0;
     int frames_written = 0;
+    cv::VideoWriter result_video;
     while(!video.detection_framenums.empty())
     {
         for(int f = 0; f < frame_step; f++)
@@ -126,8 +124,24 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
 
         // Write this frame?
         bool write_frame = (!trim_videos) || (!frame_detections_filtered.empty());
+
+        // Write the frame to the output video
         if(write_frame)
         {
+            // Check if capture is open and open it if not           
+            if(!result_video.isOpened())
+            {
+                // Open results video for writing
+                result_video.open(output_filepath_container.string(), fourcc, fps, cv::Size(image_width, image_height));
+                
+                // Verify the video got opened for writing
+                if(!result_video.isOpened())
+                {
+                    std::cerr << "Error: failed to open file for writing: " << output_filepath_container.string() << std::endl;
+                    return -ENOENT;
+                }
+            }
+
             if(draw_boxes)
             {
                 draw_boxes_on_frame(frame, frame_detections_filtered, box_colors, class_names);
@@ -145,7 +159,8 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
                 draw_timestamp(frame, (long)time_ms);
             }
             
-            result_video << frame;
+            // Append the frame to the output video
+            result_video.write(frame);
             frames_written++;
         }
         video.detection_framenums.pop();
@@ -154,7 +169,26 @@ int write_result_video(Video &video, const std::string &config_filepath, const s
         // Increment frame number
         frame_num += 1;
     }
-    std::cout << "Wrote " << frames_written << " frames to " << output_filepath_container.string() << std::endl;
+    
+    // Close the video
+    result_video.release();
+
+    if(frames_written > 0)
+    {
+        // Check if output file exists
+        if(boost::filesystem::exists(output_filepath_container))
+        {
+            std::cout << "Wrote " << frames_written << " frames to " << output_filepath_container.string() << std::endl;
+        }
+        else
+        {
+            std::cerr << "Warning: objects detected in " << video.path << " but output video not written to " << output_filepath_container.string() << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "No detections in " << video.path << std::endl;
+    }
 
     //TODO: Check that video actually got written
 
