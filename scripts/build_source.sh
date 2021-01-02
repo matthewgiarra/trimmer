@@ -6,4 +6,12 @@ else
     TARGET=$1
 fi
 
-docker run --rm -it -v $(pwd):/workspace --gpus all trimmer /bin/bash -c "mkdir -p /workspace/build && cd /workspace/build && cmake .. && make $TARGET -j12"
+if [ "$2" == "--nogpu" ]; then
+    GPU_STRING=""
+    echo "Building WITHOUT GPUs"
+else
+    GPU_STRING="--gpus all"
+    echo "Building with GPUs"
+fi
+
+docker run --rm -it -v $(pwd):/workspace $GPU_STRING trimmer /bin/bash -c "mkdir -p /workspace/build && cd /workspace/build && cmake .. && make $TARGET -j12"

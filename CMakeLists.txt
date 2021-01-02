@@ -57,6 +57,9 @@ add_subdirectory(${JSON_ROOT_DIR})
 include_directories(${JSON_INCLUDE_DIR})
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 
+# # Messagepack. Can't figure out how to actually get msgpack_DIR
+# find_package(msgpack REQUIRED)
+
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
@@ -78,6 +81,13 @@ set(TRIMMER_SOURCE "${CORE_SOURCE}"
 "${CORE_SOURCE_DIR}/trimmer.cpp")
 set(TRIMMER_HEADERS "")
 
+set(ZMQTEST_SOURCE "${CORE_SOURCE_DIR}/zmqtest.cpp")
+set(ZMQTEST_HEADERS "")
+
 set(TRIMMER_APP "trimmer")
 add_executable(${TRIMMER_APP} ${TRIMMER_SOURCE})
 target_link_libraries(${TRIMMER_APP} nlohmann_json::nlohmann_json ${Boost_LIBRARIES} tkDNN)
+
+set(ZMQTEST_APP "zmqtest")
+add_executable(${ZMQTEST_APP} ${ZMQTEST_SOURCE})
+target_link_libraries(${ZMQTEST_APP} nlohmann_json::nlohmann_json ${OpenCV_LIBS} "/usr/lib/x86_64-linux-gnu/libzmq.so")
