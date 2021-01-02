@@ -9,10 +9,9 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/videoio.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "frame.hpp"
 
-using nlohmann::json;
-
-static void parse_message_header(zmq::message_t &recv_msg, json &header_json)
+static void parse_message_header(zmq::message_t &recv_msg, nlohmann::json &header_json)
 {
   if (recv_msg.size() > 0)
   {    
@@ -21,7 +20,7 @@ static void parse_message_header(zmq::message_t &recv_msg, json &header_json)
       int  header_bytes = *header_bytes_ptr;
       char *header_ptr = (char*)&header_bytes_ptr[1]; // Points to the first byte in the header text
       std::string header_str(header_ptr, header_ptr + header_bytes);
-      header_json = json::parse(header_str);
+      header_json = nlohmann::json::parse(header_str);
   }
 };
 
@@ -29,7 +28,7 @@ void print_message_header(zmq::message_t &recv_msg)
 {
   if (recv_msg.size() > 0)
   {    
-      json header_json;
+      nlohmann::json header_json;
       parse_message_header(recv_msg, header_json);
       std::cout << header_json <<std::endl;
   }
@@ -79,26 +78,15 @@ int main (int argc, char *argv[])
         std::cout << "recv_msg.size() = " << recv_msg.size() << std::endl;
         if(recv_msg.size() > 0)
         {
-            result = msgpack::unpack(static_cast<const char*>(recv_msg.data()), recv_msg.size());
-            msgpack::object deserialized = result.get();
-            msgpack::type::tuple<int, std::string, std::vector<uint8_t>> dst;
-            deserialized.convert(dst);
-            json header = json::parse(std::get<1>(dst));
-            std::cout << "Header bytes: " << std::get<0>(dst) << std::endl;
-            std::cout << "Header string: " << header << std::endl;
-            std::cout << "Pixels: " << std::get<2>(dst).size() << std::endl;
-
-            int rows = header["shape"][0];
-            int cols = header["shape"][1];
-            int channels = header["shape"][2];
-
-            std::vector<uint8_t> image_data = std::get<2>(dst);
-            
-            cv::Mat image(rows, cols, CV_8UC3, cv::Scalar(0,0,0));
-            memcpy(image.data, image_data.data(), image_data.size()*sizeof(uint8_t));
+            // Create frame object
+            Frame frame(recv_msg);
             
             if(!result_video.isOpened())
             {
+
+                int rows = frame.header["shape"][0];
+                int cols = frame.header["shape"][1]; 
+
                 // Open results video for writing
                 result_video.open(output_filepath_container, fourcc, fps, cv::Size(cols, rows));
                 
@@ -111,7 +99,7 @@ int main (int argc, char *argv[])
             }
 
             // Write frame to output video
-            result_video.write(image);
+            result_video.write(frame.image);
             
             // std::string header_str(header_ptr, header_ptr + header_bytes);
             std::cout << "Received message " << num_gotten << std::endl;

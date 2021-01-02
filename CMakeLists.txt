@@ -81,7 +81,7 @@ set(TRIMMER_SOURCE "${CORE_SOURCE}"
 "${CORE_SOURCE_DIR}/trimmer.cpp")
 set(TRIMMER_HEADERS "")
 
-set(ZMQTEST_SOURCE "${CORE_SOURCE_DIR}/zmqtest.cpp")
+set(ZMQTEST_SOURCE "${CORE_SOURCE_DIR}/zmqtest.cpp" "${CORE_SOURCE_DIR}/Frame.cpp")
 set(ZMQTEST_HEADERS "")
 
 set(TRIMMER_APP "trimmer")
@@ -90,4 +90,4 @@ target_link_libraries(${TRIMMER_APP} nlohmann_json::nlohmann_json ${Boost_LIBRAR
 
 set(ZMQTEST_APP "zmqtest")
 add_executable(${ZMQTEST_APP} ${ZMQTEST_SOURCE})
-target_link_libraries(${ZMQTEST_APP} nlohmann_json::nlohmann_json ${OpenCV_LIBS} "/usr/lib/x86_64-linux-gnu/libzmq.so")
+target_link_libraries(${ZMQTEST_APP} nlohmann_json::nlohmann_json ${OpenCV_LIBS} "/usr/lib/x86_64-linux-gnu/libzmq.so" tkDNN)
