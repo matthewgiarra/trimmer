@@ -32,7 +32,7 @@ find_package(CUDNN REQUIRED)
 include_directories(${CUDNN_INCLUDE_DIR})
 
 # Boost
-find_package(Boost 1.65 REQUIRED COMPONENTS filesystem program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 message("Boost found: " ${Boost_FOUND})
 message("Boost include dirs: " ${Boost_INCLUDE_DIRS})
