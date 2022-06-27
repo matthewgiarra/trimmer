@@ -11,7 +11,9 @@ set(tkDNN_INCLUDE_DIR "${tkDNN_ROOT_DIR}/include")
 include_directories("${tkDNN_INCLUDE_DIR}/tkDNN")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${tkDNN_ROOT_DIR}/cmake)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
+set(CMAKE_CXX_STANDARD 14)
 message("CMAKE_CXX_COMPILER_ID: " ${CMAKE_CXX_COMPILER_ID})
 message("CMAKE_CXX_COMPILER_VERSION: " ${CMAKE_CXX_COMPILER_VERSION})
 
@@ -38,7 +40,7 @@ message("Boost found: " ${Boost_FOUND})
 message("Boost include dirs: " ${Boost_INCLUDE_DIRS})
 
 # compile
-file(GLOB tkdnn_CUSRC "${tkDNN_SOURCE_DIR}/kernels/*.cu" "${tkDNN_SOURCE_DIR}/sorting.cu")
+file(GLOB tkdnn_CUSRC "${tkDNN_SOURCE_DIR}/kernels/*.cu" "${tkDNN_SOURCE_DIR}/sorting.cu" "${tkDNN_SOURCE_DIR}/pluginsRT/*.cpp")
 cuda_include_directories(${tkDNN_INCLUDE_DIR} ${CORE_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
 cuda_add_library(kernels SHARED ${tkdnn_CUSRC})
 
