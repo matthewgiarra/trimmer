@@ -3,4 +3,4 @@
 	url = https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
 [submodule "tkDNN"]
 	path = tkDNN
-	url = https://github.com/ceccocats/tkDNN
+	url = https://github.com/matthewgiarra/tkDNN
