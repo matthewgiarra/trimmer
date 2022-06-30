@@ -19,6 +19,7 @@
 # TKDNN_BATCHSIZE=16 seems to work well on an RTX8000 (~400 FPS for yolo4_int8.rt)
 # YMMV so experiment with this
 TKDNN_BATCHSIZE=16
+TKDNN_ROOT="/root/Development/tkDNN"
 
 # Check if this is being run as root
 if [ -f /.dockerenv ] # This line checks whether the script is running in a docker container
@@ -36,7 +37,7 @@ then
     then
         echo "Building $FILE"
         export TKDNN_MODE=FP32
-        /bin/bash -c "/tkDNN/build/test_yolo4"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -48,7 +49,7 @@ then
     then
         echo "Building $FILE"
         export TKDNN_MODE=FP16
-        /bin/bash -c "/tkDNN/build/test_yolo4"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -60,7 +61,7 @@ then
     then
         echo "Building $FILE"
         export TKDNN_MODE=INT8
-        /bin/bash -c "/tkDNN/build/test_yolo4"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -72,7 +73,7 @@ then
     then
         echo "Building $FILE"
         export TKDNN_MODE=FP32
-        /bin/bash -c "/tkDNN/build/test_yolo4tiny"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4tiny"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -84,7 +85,7 @@ then
     then
         echo "Building yolo4tiny (fp16)"
         export TKDNN_MODE=FP16
-        /bin/bash -c "/tkDNN/build/test_yolo4tiny"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4tiny"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -96,7 +97,7 @@ then
     then
         echo "Building yolo4 tiny (int8)"
         export TKDNN_MODE=INT8
-        /bin/bash -c "/tkDNN/build/test_yolo4tiny"
+        /bin/bash -c "$TKDNN_ROOT/build/test_yolo4tiny"
         test -f $FILE && echo "Built /models/$FILE"
     else
         echo "/models/$FILE exists, skipping"
@@ -112,5 +113,5 @@ else
     test ! -d $MODEL_DIR_HOST && raise error "Failed to create $MODEL_DIR_HOST" && exit 1
     
     # Launch the docker container to build the models
-    docker run --rm -it -v $(pwd):/workspace -v $MODEL_DIR_HOST:/models --env TKDNN_BATCHSIZE=$TKDNN_BATCHSIZE --gpus all trimmer /bin/bash -c "/workspace/scripts/build_models.sh"
+    docker run --rm -it -v $(pwd):/workspace -v $MODEL_DIR_HOST:/models --env TKDNN_BATCHSIZE=$TKDNN_BATCHSIZE --env TKDNN_ROOT=$TKDNN_ROOT --gpus all trimmer /bin/bash -c "/workspace/scripts/build_models.sh"
 fi
