@@ -26,6 +26,12 @@ cd .. # This should put you in trimmer's main directory
 
 ```
 
+Or, alternatively, in one line:
+
+```bash
+./scripts/build_all.sh
+```
+
 3. Run the `trimmer` application on the example video.
 
 ```bash
