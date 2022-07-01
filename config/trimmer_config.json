@@ -6,7 +6,7 @@
         "output_dir_container" : "/data/trimmed_videos",
         "workspace_dir_container" : "/workspace",
         "video_list_path_workspace" : "config/video_list.json",
-        "model_path_container" : "/models/yolo4tiny_int8.rt",
+        "model_path_container" : "/models/yolo4_fp16.rt",
         "output_video_suffix" : "_trimmed"
     },
     

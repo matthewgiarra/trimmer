@@ -2,14 +2,16 @@ FROM ceccocats/tkdnn:latest
 LABEL maintainer "Matthew N. Giarra <matthew.giarra@gmail.com>"
 
 # Install boost libraries
-RUN apt-get update && apt-get install libboost-filesystem-dev libboost-program-options1.65-dev -y
-WORKDIR /workspace
+RUN apt-get update && apt-get install libboost-filesystem-dev libboost-program-options-dev -y
 
-# Compile tkDNN
-WORKDIR /
-RUN git clone https://github.com/ceccocats/tkDNN.git && cd tkDNN && mkdir build && cd build \ 
-    && cmake .. && make -j12
+# Where tkDNN is installed in the image
+ARG TKDNN_ROOT="/root/Development/tkDNN"
+ENV TKDNN_ROOT=$TKDNN_ROOT
 
-# Download coco validation data
-RUN /bin/bash /tkDNN/scripts/download_validation.sh COCO
+# Copy .so files to a dir on the system path
+RUN cp $TKDNN_ROOT/build/*.so /usr/local/lib
+
+# Download coco validation 
+RUN cd $TKDNN_ROOT && /bin/bash $TKDNN_ROOT/scripts/download_validation.sh COCO
+
 WORKDIR /workspace

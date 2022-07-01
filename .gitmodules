@@ -1,3 +1,6 @@
 [submodule "nlohmann_json_cmake_fetchcontent"]
 	path = nlohmann_json_cmake_fetchcontent
 	url = https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+[submodule "tkDNN"]
+	path = tkDNN
+	url = https://github.com/matthewgiarra/tkDNN
