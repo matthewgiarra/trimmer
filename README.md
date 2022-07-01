@@ -6,7 +6,6 @@ Trim long videos to just the segments containing objects of interest.
 # Quick start
 
 1. Clone this repo & submodules
-*Note: This is temporary until the parent repository (ceccocats/tkNN) fixes their dockerfile.*
 ```bash
 git clone --recurse-submodules git@github.com:matthewgiarra/trimmer.git # see Troubleshooting section if this fails.
 cd trimmer/tkDNN
