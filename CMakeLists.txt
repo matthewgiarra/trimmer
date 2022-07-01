@@ -5,13 +5,12 @@ set(CORE_SOURCE_DIR  "${PROJECT_SOURCE_DIR}/src")
 set(CORE_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
 include_directories(${CORE_INCLUDE_DIR})
 
-set(tkDNN_ROOT_DIR "/tkDNN")
-set(tkDNN_SOURCE_DIR "${tkDNN_ROOT_DIR}/src")
-set(tkDNN_INCLUDE_DIR "${tkDNN_ROOT_DIR}/include")
-include_directories("${tkDNN_INCLUDE_DIR}/tkDNN")
+set(TKDNN_ROOT_DIR "/root/Development/tkDNN")
+set(TKDNN_SOURCE_DIR "${TKDNN_ROOT_DIR}/src")
+set(TKDNN_INCLUDE_DIR "${TKDNN_ROOT_DIR}/include")
+include_directories("${TKDNN_INCLUDE_DIR}/tkDNN")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${tkDNN_ROOT_DIR}/cmake)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${TKDNN_ROOT_DIR}/cmake)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
 set(CMAKE_CXX_STANDARD 14)
 message("CMAKE_CXX_COMPILER_ID: " ${CMAKE_CXX_COMPILER_ID})
@@ -40,9 +39,9 @@ message("Boost found: " ${Boost_FOUND})
 message("Boost include dirs: " ${Boost_INCLUDE_DIRS})
 
 # compile
-file(GLOB tkdnn_CUSRC "${tkDNN_SOURCE_DIR}/kernels/*.cu" "${tkDNN_SOURCE_DIR}/sorting.cu" "${tkDNN_SOURCE_DIR}/pluginsRT/*.cpp")
-cuda_include_directories(${tkDNN_INCLUDE_DIR} ${CORE_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
-cuda_add_library(kernels SHARED ${tkdnn_CUSRC})
+file(GLOB TKDNN_CUSRC "${TKDNN_SOURCE_DIR}/kernels/*.cu" "${TKDNN_SOURCE_DIR}/sorting.cu" "${TKDNN_SOURCE_DIR}/pluginsRT/*.cpp")
+cuda_include_directories(${TKDNN_INCLUDE_DIR} ${CORE_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
+cuda_add_library(kernels SHARED ${TKDNN_CUSRC})
 
 #-------------------------------------------------------------------------------
 # External Libraries
@@ -62,13 +61,13 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
-file(GLOB tkdnn_SRC "${tkDNN_SOURCE_DIR}/*.cpp")
-set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
+file(GLOB TKDNN_SRC "${TKDNN_SOURCE_DIR}/*.cpp")
+set(TKDNN_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-include_directories(${CORE_INCLUDE_DIR} ${tkDNN_ROOT_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
-add_library(tkDNN SHARED ${tkdnn_SRC})
-target_link_libraries(tkDNN ${tkdnn_LIBS})
+include_directories(${CORE_INCLUDE_DIR} ${TKDNN_ROOT_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
+add_library(tkDNN SHARED ${TKDNN_SRC})
+target_link_libraries(tkDNN ${TKDNN_LIBS})
 
 set(CORE_SOURCE
 "${CORE_SOURCE_DIR}/video.cpp"
