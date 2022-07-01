@@ -9,10 +9,7 @@ Trim long videos to just the segments containing objects of interest.
 *Note: This is temporary until the parent repository (ceccocats/tkNN) fixes their dockerfile.*
 ```bash
 git clone --recurse-submodules git@github.com:matthewgiarra/trimmer.git
-cd trimmer
-git checkout modernize
-git submodule update --init --recursive
-cd tkDNN
+cd trimmer/tkDNN
 git checkout dockerfile.base-add-libyaml-cpp-dev
 cd ..
 ```
