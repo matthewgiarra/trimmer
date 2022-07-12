@@ -25,6 +25,88 @@ Video::Video(const std::string &input_file_path)
     
 };
 
+
+int write_results(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
+{
+    return(0);
+}
+
+int write_result_json(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
+{
+    // Read the config file
+    std::ifstream input_stream;
+    input_stream.open(config_filepath);
+    if (!input_stream.is_open())
+    {
+        std::cerr << "Could not open input file invalid path.\tfilepath: " << config_filepath << std::endl;
+        return -ENOENT;
+    }
+    nlohmann::json config_data = nlohmann::json::parse(input_stream);
+    input_stream.close();
+
+    // Get parameters
+    boost::filesystem::path input_path(video.path);
+    boost::filesystem::path output_file_name(input_path.stem().string() + config_data[g_files][g_output_json_suffix].get<std::string>() + std::string(".json"));
+
+    // Choose the output directory
+    // If consolidating video outputs, put everything in output_dir_container
+    // Otherwise put the output video next to the input video with suffix appended before extension 
+    boost::filesystem::path output_dir_container;
+    if(config_data[g_options][g_consolidate_videos]){
+        output_dir_container = config_data[g_files][g_output_dir_container].get<std::string>();
+    }
+    else
+    {
+        output_dir_container = input_path.parent_path();
+    }
+
+    // Create the output directory
+    boost::filesystem::create_directories(output_dir_container);
+
+    // Construct the output file path (container path)
+    boost::filesystem::path output_filepath_container = output_dir_container / output_file_name;
+
+    // Processing options
+    float roi_threshold = config_data[g_parameters][g_roi_threshold];
+
+    // Open the file for reading. Need to open the vid to get metadata.
+    cv::VideoCapture cap(video.path);
+    if(!cap.isOpened())
+    {
+        std::cerr << "Failed to open video file for reading in write_result_json(): " << video.path << std::endl;
+        return -ENOENT;
+    }
+
+    // Get some parameters from the input video
+    int image_width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    int image_height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    double fps = cap.get(cv::CAP_PROP_FPS);
+
+    // Close the video
+    if(cap.isOpened())
+    {
+        cap.release();
+    }
+
+    // Set up ROI bounding box
+    tk::dnn::box roi;
+    float roi_x = config_data[g_parameters][g_roi][g_roi_x];
+    float roi_y = config_data[g_parameters][g_roi][g_roi_y];
+    float roi_w = config_data[g_parameters][g_roi][g_roi_w];
+    float roi_h = config_data[g_parameters][g_roi][g_roi_h];
+    roi.x = roi_x * image_width;
+    roi.y = roi_y * image_height;
+    roi.w = roi_w * image_width;
+    roi.h = roi_h * image_height;
+    roi.cl = 0;
+
+    
+
+
+
+    return(0);
+}
+
 int write_result_video(Video &video, const std::string &config_filepath, const std::vector<int> &trimmer_class_nums, const std::vector<std::string> &class_names)
 {
     
@@ -217,6 +299,7 @@ void run_video_writer_thread(std::shared_ptr<std::timed_mutex> video_queue_mutex
         // Export all the videos in the queue
         while(!video_queue_writer.empty())
         {            
+            write_results(video_queue_writer.front(), config_filepath, trimmer_class_nums, class_names);
             write_result_video(video_queue_writer.front(), config_filepath, trimmer_class_nums, class_names);
             video_queue_writer.pop();
         }        

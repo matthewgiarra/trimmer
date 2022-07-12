@@ -23,6 +23,7 @@ const std::string g_model_path_container{"model_path_container"};
 const std::string g_options{"options"};
 const std::string g_consolidate_videos{"consolidate_videos"};
 const std::string g_output_video_suffix{"output_video_suffix"};
+const std::string g_output_json_suffix{"output_json_suffix"}
 const std::string g_output_dir_container{"output_dir_container"};
 const std::string g_trim_videos{"trim_videos"};
 const std::string g_draw_boxes{"draw_boxes"};
