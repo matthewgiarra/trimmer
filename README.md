@@ -1,7 +1,7 @@
 
 
 # trimmer
-Trim long videos to just the segments containing objects of interest. 
+Trim long videos to just the segments containing objects of interest. The intended use case is to automate scrubbing long videos (e.g. security footage, trail cameras) to identify & extract portions where certain user-specified items are present (e.g., people, animals).  
 
 # Quick start
 
